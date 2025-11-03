@@ -75,6 +75,21 @@ impl ServiceStackClient {
         }
     }
 
+    /// Build a full URL from the base URL and path
+    fn build_url(&self, path: &str) -> String {
+        format!("{}{}", self.base_url, path)
+    }
+
+    /// Send a request and deserialize the JSON response
+    async fn send_json<T>(&self, response: reqwest::Response) -> Result<T>
+    where
+        T: for<'de> Deserialize<'de>,
+    {
+        let response = response.error_for_status()?;
+        let result = response.json::<T>().await?;
+        Ok(result)
+    }
+
     /// Create a new ServiceStack client with a custom reqwest Client
     ///
     /// # Arguments
@@ -115,11 +130,9 @@ impl ServiceStackClient {
     where
         T: for<'de> Deserialize<'de>,
     {
-        let url = format!("{}{}", self.base_url, path);
+        let url = self.build_url(path);
         let response = self.client.get(&url).send().await?;
-        let response = response.error_for_status()?;
-        let result = response.json::<T>().await?;
-        Ok(result)
+        self.send_json(response).await
     }
 
     /// Make a POST request with a JSON body
@@ -137,11 +150,9 @@ impl ServiceStackClient {
         S: Serialize,
         T: for<'de> Deserialize<'de>,
     {
-        let url = format!("{}{}", self.base_url, path);
+        let url = self.build_url(path);
         let response = self.client.post(&url).json(body).send().await?;
-        let response = response.error_for_status()?;
-        let result = response.json::<T>().await?;
-        Ok(result)
+        self.send_json(response).await
     }
 
     /// Make a PUT request with a JSON body
@@ -159,11 +170,9 @@ impl ServiceStackClient {
         S: Serialize,
         T: for<'de> Deserialize<'de>,
     {
-        let url = format!("{}{}", self.base_url, path);
+        let url = self.build_url(path);
         let response = self.client.put(&url).json(body).send().await?;
-        let response = response.error_for_status()?;
-        let result = response.json::<T>().await?;
-        Ok(result)
+        self.send_json(response).await
     }
 
     /// Make a DELETE request
@@ -179,11 +188,9 @@ impl ServiceStackClient {
     where
         T: for<'de> Deserialize<'de>,
     {
-        let url = format!("{}{}", self.base_url, path);
+        let url = self.build_url(path);
         let response = self.client.delete(&url).send().await?;
-        let response = response.error_for_status()?;
-        let result = response.json::<T>().await?;
-        Ok(result)
+        self.send_json(response).await
     }
 
     /// Make a PATCH request with a JSON body
@@ -201,11 +208,9 @@ impl ServiceStackClient {
         S: Serialize,
         T: for<'de> Deserialize<'de>,
     {
-        let url = format!("{}{}", self.base_url, path);
+        let url = self.build_url(path);
         let response = self.client.patch(&url).json(body).send().await?;
-        let response = response.error_for_status()?;
-        let result = response.json::<T>().await?;
-        Ok(result)
+        self.send_json(response).await
     }
 
     /// Get the base URL of this client
