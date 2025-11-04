@@ -10,6 +10,19 @@ A Rust client library for making typed API requests to [ServiceStack](https://se
 - ⚡ **Async/await** - Built on tokio and reqwest for async operations
 - 🎯 **ServiceStack conventions** - Follows ServiceStack's REST API patterns
 - 🛠️ **Customizable** - Flexible configuration options
+A Rust client library for ServiceStack services, providing type-safe HTTP communication with async/await support.
+
+[![Crates.io](https://img.shields.io/crates/v/servicestack.svg)](https://crates.io/crates/servicestack)
+[![Documentation](https://docs.rs/servicestack/badge.svg)](https://docs.rs/servicestack)
+[![License](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](LICENSE)
+
+## Features
+
+- 🚀 **Async/await support** - Built on tokio for efficient async operations
+- 📦 **Type-safe** - Leverages Rust's type system with serde for serialization
+- 🔧 **Flexible** - Support for all HTTP methods (GET, POST, PUT, DELETE, PATCH)
+- 🛡️ **Reliable** - Built on reqwest for robust HTTP communication
+- 📖 **Well-documented** - Comprehensive API documentation and examples
 
 ## Installation
 
@@ -17,208 +30,105 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-servicestack = "0.1"
+servicestack = "0.1.0"
+tokio = { version = "1.0", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
-tokio = { version = "1", features = ["full"] }
 ```
 
 ## Quick Start
 
 ```rust
+use servicestack::{ServiceStackClient, Result};
 use serde::{Deserialize, Serialize};
-use servicestack::{JsonServiceClient, ServiceStackRequest, ServiceStackResponse};
 
-// Define your request DTO
 #[derive(Serialize)]
-struct Hello {
+struct HelloRequest {
     name: String,
 }
 
-// Implement ServiceStackRequest trait
-impl ServiceStackRequest for Hello {
-    type Response = HelloResponse;
-    
-    fn path(&self) -> String {
-        "/hello".to_string()
-    }
-}
-
-// Define your response DTO
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize)]
 struct HelloResponse {
     result: String,
 }
 
-impl ServiceStackResponse for HelloResponse {}
-
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Create a client
-    let client = JsonServiceClient::new("https://test.servicestack.net");
+async fn main() -> Result<()> {
+    // Create a new client
+    let client = ServiceStackClient::new("https://example.org");
     
-    // Make a request
-    let request = Hello { name: "World".to_string() };
-    let response: HelloResponse = client.post(request).await?;
+    // Make a POST request
+    let request = HelloRequest { 
+        name: "World".to_string() 
+    };
+    let response: HelloResponse = client.post("/hello", &request).await?;
     
-    println!("Response: {:?}", response);
+    println!("{}", response.result);
     Ok(())
 }
 ```
 
-## Usage
+## Usage Examples
 
-### Creating a Client
-
-```rust
-use servicestack::JsonServiceClient;
-
-// Basic client
-let client = JsonServiceClient::new("https://api.example.com");
-
-// With custom reqwest client
-let http_client = reqwest::Client::builder()
-    .timeout(std::time::Duration::from_secs(60))
-    .build()?;
-let client = JsonServiceClient::with_client("https://api.example.com", http_client);
-```
-
-### Making Requests
-
-#### POST Request
+### GET Request
 
 ```rust
-let request = Hello { name: "Rust".to_string() };
-let response: HelloResponse = client.post(request).await?;
-```
+use servicestack::{ServiceStackClient, Result};
+use serde::Deserialize;
 
-#### GET Request
-
-```rust
-let request = GetUser { id: 123 };
-let response: UserResponse = client.get(request).await?;
-```
-
-#### PUT Request
-
-```rust
-let request = UpdateUser { id: 123, name: "John".to_string() };
-let response: UpdateResponse = client.put(request).await?;
-```
-
-#### DELETE Request
-
-```rust
-let request = DeleteUser { id: 123 };
-let response: DeleteResponse = client.delete(request).await?;
-```
-
-#### Using the request method specified in the DTO
-
-```rust
-// The DTO can specify its own HTTP method
-impl ServiceStackRequest for MyRequest {
-    type Response = MyResponse;
-    
-    fn path(&self) -> String {
-        "/my-endpoint".to_string()
-    }
-    
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Put  // Custom method
-    }
+#[derive(Deserialize)]
+struct User {
+    id: u64,
+    name: String,
 }
 
-// Use the send method to use the DTO's specified method
-let response: MyResponse = client.send(request).await?;
-```
-
-### Authentication
-
-```rust
-// Set bearer token
-let mut client = JsonServiceClient::new("https://api.example.com");
-client.set_bearer_token("your-token-here");
-
-// Make authenticated requests
-let response = client.post(request).await?;
-
-// Clear token
-client.clear_bearer_token();
-```
-
-### Error Handling
-
-```rust
-use servicestack::ServiceStackError;
-
-match client.post(request).await {
-    Ok(response) => println!("Success: {:?}", response),
-    Err(ServiceStackError::ApiError { status, message }) => {
-        println!("API error {}: {}", status, message);
-    }
-    Err(ServiceStackError::RequestError(e)) => {
-        println!("Request error: {}", e);
-    }
-    Err(e) => println!("Other error: {}", e),
+async fn get_user(client: &ServiceStackClient, id: u64) -> Result<User> {
+    client.get(&format!("/users/{}", id)).await
 }
 ```
 
-### Custom HTTP Methods
-
-You can specify custom HTTP methods by implementing the `method()` function in your request DTO:
+### POST Request
 
 ```rust
-use servicestack::HttpMethod;
+use servicestack::{ServiceStackClient, Result};
+use serde::{Deserialize, Serialize};
 
-impl ServiceStackRequest for CustomRequest {
-    type Response = CustomResponse;
-    
-    fn path(&self) -> String {
-        "/custom".to_string()
-    }
-    
-    fn method(&self) -> HttpMethod {
-        HttpMethod::Patch
-    }
+#[derive(Serialize)]
+struct CreateUserRequest {
+    name: String,
+    email: String,
+}
+
+#[derive(Deserialize)]
+struct CreateUserResponse {
+    id: u64,
+    name: String,
+}
+
+async fn create_user(client: &ServiceStackClient) -> Result<CreateUserResponse> {
+    let request = CreateUserRequest {
+        name: "John Doe".to_string(),
+        email: "john@example.com".to_string(),
+    };
+    client.post("/users", &request).await
 }
 ```
 
-### Raw Requests
-
-For more control, you can use the raw request method:
+### Custom Client Configuration
 
 ```rust
-let response: MyResponse = client
-    .request("POST", "/custom-endpoint", Some(&request_body))
-    .await?;
-```
+use servicestack::ServiceStackClient;
+use reqwest::Client;
+use std::time::Duration;
 
-## Examples
+let custom_client = Client::builder()
+    .timeout(Duration::from_secs(60))
+    .build()
+    .unwrap();
 
-See the [examples](examples/) directory for more usage examples:
-
-- [basic_usage.rs](examples/basic_usage.rs) - Simple request/response example
-- [authenticated_request.rs](examples/authenticated_request.rs) - Using bearer token authentication
-- [custom_method.rs](examples/custom_method.rs) - Custom HTTP methods
-
-Run examples with:
-
-```bash
-cargo run --example basic_usage
-```
-
-## Testing
-
-Run the test suite:
-
-```bash
-cargo test
-```
-
-Run with output:
-
-```bash
-cargo test -- --nocapture
+let client = ServiceStackClient::with_client(
+    "https://api.example.com",
+    custom_client
+);
 ```
 
 ## API Documentation
@@ -238,7 +148,16 @@ Learn more about ServiceStack's typed client patterns at [docs.servicestack.net]
 ## License
 
 This project is licensed under the MIT License.
+For detailed API documentation, visit [docs.rs/servicestack](https://docs.rs/servicestack).
+
+## License
+
+This project is licensed under the BSD-3-Clause License - see the LICENSE file for details.
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## About ServiceStack
+
+[ServiceStack](https://servicestack.net) is a simple, fast, versatile and highly-productive full-featured Web and Web Services Framework.
