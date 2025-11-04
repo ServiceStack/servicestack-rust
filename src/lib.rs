@@ -1,5 +1,6 @@
 //! # ServiceStack Rust Client Library
 //!
+//! `servicestack` provides a JsonServiceClient for making typed API requests to ServiceStack services.
 //! A Rust client library for ServiceStack services.
 //!
 //! ## Features

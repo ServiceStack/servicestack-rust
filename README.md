@@ -1,5 +1,15 @@
 # ServiceStack Rust Client Library
 
+A Rust client library for making typed API requests to [ServiceStack](https://servicestack.net/) services.
+
+## Features
+
+- 🚀 **Type-safe API requests** - Use Rust DTOs for compile-time safety
+- 🔄 **Full HTTP method support** - GET, POST, PUT, DELETE, PATCH
+- 🔐 **Bearer token authentication** - Built-in support for authentication
+- ⚡ **Async/await** - Built on tokio and reqwest for async operations
+- 🎯 **ServiceStack conventions** - Follows ServiceStack's REST API patterns
+- 🛠️ **Customizable** - Flexible configuration options
 A Rust client library for ServiceStack services, providing type-safe HTTP communication with async/await support.
 
 [![Crates.io](https://img.shields.io/crates/v/servicestack.svg)](https://crates.io/crates/servicestack)
@@ -123,6 +133,21 @@ let client = ServiceStackClient::with_client(
 
 ## API Documentation
 
+Generate and view the documentation:
+
+```bash
+cargo doc --open
+```
+
+## ServiceStack DTOs
+
+This library works seamlessly with ServiceStack's Add ServiceStack Reference feature. You can generate Rust DTOs from your ServiceStack services and use them directly with this client.
+
+Learn more about ServiceStack's typed client patterns at [docs.servicestack.net](https://docs.servicestack.net/).
+
+## License
+
+This project is licensed under the MIT License.
 For detailed API documentation, visit [docs.rs/servicestack](https://docs.rs/servicestack).
 
 ## License
